@@ -2,7 +2,7 @@ services:
   - type: web
     name: vera-bot-tp
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --only-binary=:all: -r requirements.txt
     startCommand: uvicorn bot.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
