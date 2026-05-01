@@ -27,7 +27,7 @@ BOT_URL = "http://localhost:8080"
 LLM_PROVIDER = "groq"
 
 # Your API key (paste your key here)
-LLM_API_KEY = "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"  # <-- PUT YOUR API KEY HERE
+LLM_API_KEY = ""  # <-- PUT YOUR API KEY HERE
 
 # Model to use (leave empty for default, or specify like "gpt-4o", "claude-3-5-sonnet-20241022", etc.)
 LLM_MODEL = "llama-3.3-70b-versatile"  # <-- Optional: specify model or leave empty for default
