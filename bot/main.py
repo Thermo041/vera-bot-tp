@@ -117,13 +117,22 @@ async def push_context(req: ContextRequest):
 async def tick(req: TickRequest):
     """Process tick and generate actions"""
     
+    print(f"[TICK] Processing {len(req.available_triggers)} triggers")
     actions = []
     
     # Process each available trigger
     for trigger_id in req.available_triggers[:10]:  # Limit to 10 per tick
         
+        print(f"[TICK] Processing trigger: {trigger_id}")
         # Compose message for this trigger
-        action = compose_message(trigger_id)
+        try:
+            action = compose_message(trigger_id)
+            print(f"[TICK] Compose result: {action is not None}")
+        except Exception as e:
+            print(f"[TICK] Compose error: {e}")
+            import traceback
+            traceback.print_exc()
+            action = None
         
         if action:
             actions.append(action)
@@ -139,6 +148,7 @@ async def tick(req: TickRequest):
                 "ts": req.now
             })
     
+    print(f"[TICK] Returning {len(actions)} actions")
     return {"actions": actions}
 
 
