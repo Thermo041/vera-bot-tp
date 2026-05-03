@@ -35,6 +35,7 @@ class LLMClient:
         try:
             client = self._get_client()
             
+            print(f"[LLM] Calling {self.model}...")
             response = client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -45,10 +46,14 @@ class LLMClient:
                 max_tokens=1500
             )
             
-            return response.choices[0].message.content
+            content = response.choices[0].message.content
+            print(f"[LLM] Response received: {len(content)} chars")
+            return content
         
         except Exception as e:
-            print(f"LLM Error: {e}")
+            print(f"[LLM] Error: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
 

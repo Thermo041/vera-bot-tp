@@ -58,12 +58,16 @@ def compose_message(trigger_id: str) -> Optional[Dict[str, Any]]:
     user_prompt = build_user_prompt(category, merchant, trigger, customer)
     
     # Call LLM
-    response = llm_client.complete(SYSTEM_PROMPT, user_prompt)
-    if not response:
-        print(f"[COMPOSE] LLM returned no response")
+    try:
+        response = llm_client.complete(SYSTEM_PROMPT, user_prompt)
+        if not response:
+            print(f"[COMPOSE] LLM returned no response")
+            return None
+        
+        print(f"[COMPOSE] LLM response received: {response[:200]}...")
+    except Exception as e:
+        print(f"[COMPOSE] LLM call failed: {e}")
         return None
-    
-    print(f"[COMPOSE] LLM response received: {response[:100]}...")
     
     # Parse JSON response
     try:
@@ -91,7 +95,7 @@ def compose_message(trigger_id: str) -> Optional[Dict[str, Any]]:
             "customer_id": customer_id,
             "send_as": send_as,
             "trigger_id": trigger_id,
-            "template_name": f"vera_{trigger.get('kind', 'generic')}_v1",
+            "template_name": f"vera_{trigger.get('type', 'generic')}_v1",
             "template_params": [body[:100], body[100:200], body[200:300]],  # Split for template
             "body": body,
             "cta": cta,
@@ -102,7 +106,8 @@ def compose_message(trigger_id: str) -> Optional[Dict[str, Any]]:
         return action
     
     except Exception as e:
-        print(f"Compose error: {e}")
+        print(f"[COMPOSE] Parse error: {e}")
+        print(f"[COMPOSE] Raw LLM response: {response}")
         return None
 
 
