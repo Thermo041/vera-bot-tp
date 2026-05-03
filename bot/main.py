@@ -75,7 +75,7 @@ async def metadata():
     return {
         "team_name": os.getenv("TEAM_NAME", "Team TP"),
         "team_members": [os.getenv("TEAM_MEMBERS", "Your Name")],
-        "model": "groq/llama-3.1-70b-versatile",
+        "model": "groq/llama-3.3-70b-versatile",
         "approach": "LLM-based composer with context-aware prompting and trigger-specific templates",
         "contact_email": "team@example.com",
         "version": os.getenv("BOT_VERSION", "1.0.0"),
