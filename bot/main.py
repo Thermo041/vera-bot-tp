@@ -62,10 +62,15 @@ async def healthz():
     uptime = int(time.time() - START_TIME)
     counts = store.count_by_scope()
     
+    # Check if API key is set (show first 10 chars only)
+    api_key = os.getenv("GROQ_API_KEY", "")
+    api_key_status = f"{api_key[:10]}..." if api_key else "NOT_SET"
+    
     return {
         "status": "ok",
         "uptime_seconds": uptime,
-        "contexts_loaded": counts
+        "contexts_loaded": counts,
+        "api_key_status": api_key_status
     }
 
 
