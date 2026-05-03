@@ -15,7 +15,13 @@ class LLMClient:
     def _get_client(self):
         """Lazy initialization of Groq client"""
         if self.client is None:
-            # On Render, env vars are already loaded, no need for dotenv
+            # Load .env for local development
+            try:
+                from dotenv import load_dotenv
+                load_dotenv()
+            except:
+                pass  # On Render, dotenv might not be needed
+            
             api_key = os.getenv("GROQ_API_KEY")
             if not api_key:
                 print("[LLM] ERROR: GROQ_API_KEY not found in environment")
