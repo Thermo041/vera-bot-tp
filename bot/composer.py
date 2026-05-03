@@ -34,16 +34,17 @@ def compose_message(trigger_id: str) -> Optional[Dict[str, Any]]:
         print(f"[COMPOSE] Merchant not found: {merchant_id}")
         return None
     
-    # Get category context
-    category_slug = merchant.get("category_slug")
+    # Get category context - try multiple field names
+    category_slug = merchant.get("category_slug") or merchant.get("category") or merchant.get("identity", {}).get("category")
     if not category_slug:
-        print(f"[COMPOSE] No category_slug in merchant")
-        return None
-    
-    category = store.get("category", category_slug)
-    if not category:
-        print(f"[COMPOSE] Category not found: {category_slug}")
-        return None
+        # Fallback: use a default category context if none found
+        print(f"[COMPOSE] No category_slug in merchant, using trigger kind as fallback")
+        category = {"slug": "generic", "voice": {"tone": "professional"}, "offer_catalog": [], "peer_stats": {}}
+    else:
+        category = store.get("category", category_slug)
+        if not category:
+            print(f"[COMPOSE] Category not found: {category_slug}, using fallback")
+            category = {"slug": category_slug, "voice": {"tone": "professional"}, "offer_catalog": [], "peer_stats": {}}
     
     print(f"[COMPOSE] All contexts loaded. Calling LLM...")
     
@@ -115,7 +116,9 @@ def handle_reply(conversation_id: str, merchant_id: str, merchant_message: str,
     # Get merchant context
     merchant = store.get("merchant", merchant_id)
     if not merchant:
-        return {"action": "end", "rationale": "Merchant context not found"}
+        print(f"[REPLY] Merchant not found: {merchant_id}")
+        # Try to respond anyway with generic context
+        merchant = {"identity": {"owner_first_name": "", "name": ""}}
     
     # Build reply prompt
     prompt = build_reply_prompt(conversation_history, merchant_message, merchant)
@@ -123,7 +126,10 @@ def handle_reply(conversation_id: str, merchant_id: str, merchant_message: str,
     # Call LLM
     response = llm_client.complete(SYSTEM_PROMPT, prompt)
     if not response:
+        print(f"[REPLY] LLM returned no response")
         return {"action": "end", "rationale": "LLM error"}
+    
+    print(f"[REPLY] LLM response: {response[:200]}...")
     
     # Parse response
     try:
@@ -136,9 +142,13 @@ def handle_reply(conversation_id: str, merchant_id: str, merchant_message: str,
         action = result.get("action", "send")
         
         if action == "send":
+            body = result.get("body", "")
+            if not body:
+                print(f"[REPLY] LLM returned send action but no body")
+                return {"action": "end", "rationale": "No response body generated"}
             return {
                 "action": "send",
-                "body": result.get("body", ""),
+                "body": body,
                 "cta": result.get("cta", "open_ended"),
                 "rationale": result.get("rationale", "Reply composed")
             }
@@ -155,5 +165,6 @@ def handle_reply(conversation_id: str, merchant_id: str, merchant_message: str,
             }
     
     except Exception as e:
-        print(f"Reply error: {e}")
+        print(f"[REPLY] Parse error: {e}")
+        print(f"[REPLY] Raw response: {response}")
         return {"action": "end", "rationale": f"Parse error: {e}"}
